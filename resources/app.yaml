@@ -1,0 +1,46 @@
+
+chunk_size: 4096
+retries: 4
+
+spacy_model: en_core_web_sm
+
+## must manually install other models
+# spacy_model: en_core_web_md
+# spacy_model: en_core_web_lg
+
+output_file: output.txt
+
+search_patterns:
+  - id: reproduction+number
+    term: reproduction number
+    pattern_matchers:
+      - - TEXT: reproduction
+        - TEXT: number
+        - LIKE_NUM: yes
+      - - TEXT: reproduction
+        - TEXT: number
+        - {}
+        - LIKE_NUM: yes
+
+  - id: incubation+time
+    term: incubation time
+    pattern_matchers:
+      - - TEXT: incubation
+        - TEXT: time
+        - LIKE_NUM: yes
+      - - LIKE_NUM: yes
+        - TEXT: incubation
+        - TEXT: time
+      - - LIKE_NUM: yes
+        - {}
+        - TEXT: incubation
+        - TEXT: time
+      - - TEXT: incubation
+        - TEXT: time
+        - {}
+        - LIKE_NUM: yes
+      - - TEXT: incubation
+        - TEXT: time
+        - {}
+        - LIKE_NUM: yes
+        - {}
