@@ -1,7 +1,14 @@
 
 
-# Run
+# Install
 
+Create a new `venv`
+
+```
+pip install -e .
+```
+
+# Run
 
 ```
 clinical-deepdive
