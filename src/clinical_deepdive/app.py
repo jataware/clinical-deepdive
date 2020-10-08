@@ -12,56 +12,93 @@ from spacy.matcher import Matcher
 
 from . import config
 from .search import search_xdd_es
-from .utils import deep_get
+from .utils import deep_get, FastWriteCounter
 
 logger: Logger = logging.getLogger(__name__)
 
 
 def config_matcher(settings, nlp):
-    matcher = Matcher(nlp.vocab)
+    variable_matcher = Matcher(nlp.vocab)
+    disease_matcher = Matcher(nlp.vocab)
 
-    for pattern in settings["search_patterns"]:
-        matcher.add(pattern["id"], None, *pattern["pattern_matchers"])
+    for pattern in settings["variable_patterns"]:
+        variable_matcher.add(pattern["id"], None, *pattern["pattern_matchers"])
 
-    return matcher
-
-
-async def process_highlight(nlp, matcher, item):
-    extracted = []
-    for i, hl in enumerate(item["highlight"]):
-        doc = nlp(hl)
-        if matches := matcher(doc):
-            for match_id, start, end in matches:
-                string_id = nlp.vocab.strings[match_id]
-                span = doc[start:end]
-                extracted.append(
-                    {"highlight_idx": i, "matched_on": string_id, "match": span.text}
-                )
-
-    return extracted
+    for pattern in settings["disease_patterns"]:
+        disease_matcher.add(pattern["id"], None, *pattern["pattern_matchers"])
 
 
-def context_result(f, nlp, matcher):
+    return variable_matcher, disease_matcher
+
+async def to_rows(m: dict):
+    rows = []
+    diseases = set([d["matched_on"] for d in deep_get(m, "extracted.diseases", [])])
+    url = deep_get(m, "bibjson.link")[0]["url"]
+    doi = deep_get(m, "bibjson.identifier")[0]["id"]
+    dt = deep_get(m, "bibjson.year")
+    for d in diseases:
+        variables = deep_get(m, "extracted.variables", [])
+        for v in variables:
+            rows.append({
+                "disease": d,
+                "url": url,
+                "doi": doi,
+                "year": dt,
+                "var": v["matched_on"],
+                "est": v["n"][0],
+                "sent": v["sent"].text,
+            })
+
+    return rows
+
+def context_result(counter, f, nlp, variable_matcher, disease_matcher):
     async def process_page_result(page):
         objects = page.get("objects")
 
         for o in objects:
             txt = deep_get(o, "object.content")
+            title =  deep_get(o, "bibjson.title")
             doc = nlp(txt)
-            o["extracted"] = [
+            o["extracted"] = {}
+            o["extracted"]["variables"] = [
                 {
                     "matched_on": nlp.vocab.strings[match_id],
                     "match": doc[start:end].text,
+                    "n": [x.text for x in doc[start:end] if x.pos_ == "NUM"],
+                    "sent": doc[start:end].sent
                 }
-                for match_id, start, end in matcher(doc)
+                for match_id, start, end in variable_matcher(doc)
             ]
-            await f.write(json.dumps(o) + "\n")
+            if o["extracted"]["variables"]:
+                o["extracted"]["diseases"] = [
+                    {
+                        "matched_on": nlp.vocab.strings[match_id],
+                        "match": doc[start:end].text,
+                        "sent": doc[start:end].sent
+                    }
+                    for match_id, start, end in disease_matcher(doc)
+                ] + [ {
+                        "matched_on": nlp.vocab.strings[match_id],
+                        "match": doc[start:end].text,
+                        "sent": doc[start:end].sent
+                    }
+                    for match_id, start, end in disease_matcher(nlp(title))
+                ]
+
+                # for d in o["extracted"]["diseases"]:
+                #     logger.debug(d)
+
+                counter.increment()
+                rows = await to_rows(o)
+                for row in rows:
+                    await f.write(json.dumps(row) + "\n")
+                    #counter.increment()
 
     return process_page_result
 
 
-async def run(settings, nlp, matcher):
-    terms = [term["term"] for term in settings["search_patterns"]]
+async def run(settings, nlp, variable_matcher, disease_matcher, counter):
+    terms = [term for term in settings["search_terms"]]
     sem = asyncio.Semaphore(value=8)
     timeout = aiohttp.ClientTimeout(total=None)  # disable timeout
 
@@ -71,7 +108,7 @@ async def run(settings, nlp, matcher):
 
         for f in [
             search_xdd_es(
-                sem, session, term, co_callback=context_result(o, nlp, matcher)
+                sem, session, term, co_callback=context_result(counter, o, nlp, variable_matcher, disease_matcher)
             )
             for term in terms
         ]:
@@ -82,14 +119,16 @@ def main() -> None:
     settings = config.get_config()
     logging.info("main")
     start = perf_counter()
+    counter = FastWriteCounter()
     nlp = spacy.load(settings["spacy_model"])
-    matcher = config_matcher(settings, nlp)
+    variable_matcher, disease_matcher = config_matcher(settings, nlp)
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(run(settings, nlp, matcher))
+    loop.run_until_complete(run(settings, nlp, variable_matcher, disease_matcher, counter))
     finished = perf_counter() - start
     pretty_finished = format_timespan(finished)
 
+    logger.info("total matches: %s", counter.value)
     logger.info("Completed in %s", pretty_finished)
 
 

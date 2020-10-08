@@ -10,37 +10,72 @@ spacy_model: en_core_web_sm
 
 output_file: output.txt
 
-search_patterns:
+
+search_terms:
+  - reproduction number
+  - reproduction rate
+  - incubation time
+  - covid
+
+
+
+
+variable_patterns:
   - id: reproduction+number
-    term: reproduction number
     pattern_matchers:
-      - - TEXT: reproduction
-        - TEXT: number
+      - - LOWER: reproduction
+        - LOWER: number
         - LIKE_NUM: yes
-      - - TEXT: reproduction
-        - TEXT: number
+      - - LOWER: reproduction
+        - LOWER: number
+        - {}
+        - LIKE_NUM: yes
+
+  - id: reproduction+rate
+    pattern_matchers:
+      - - LOWER: reproduction
+        - LOWER: rate
+        - LIKE_NUM: yes
+      - - LOWER: reproduction
+        - LOWER: rate
         - {}
         - LIKE_NUM: yes
 
   - id: incubation+time
-    term: incubation time
     pattern_matchers:
-      - - TEXT: incubation
-        - TEXT: time
+      - - LOWER: incubation
+        - LOWER: time
         - LIKE_NUM: yes
       - - LIKE_NUM: yes
-        - TEXT: incubation
-        - TEXT: time
+        - LOWER: incubation
+        - LOWER: time
       - - LIKE_NUM: yes
         - {}
-        - TEXT: incubation
-        - TEXT: time
-      - - TEXT: incubation
-        - TEXT: time
+        - LOWER: incubation
+        - LOWER: time
+      - - LOWER: incubation
+        - LOWER: time
         - {}
         - LIKE_NUM: yes
-      - - TEXT: incubation
-        - TEXT: time
+      - - LOWER: incubation
+        - LOWER: time
         - {}
         - LIKE_NUM: yes
         - {}
+
+disease_patterns:
+  - id: covid
+    pattern_matchers:
+      - - LOWER: covid-19
+      - - LOWER: covid
+        - LOWER: 19
+      - - LOWER: covid
+        - {}
+        - LOWER: 19
+      - - LOWER: sars
+        - {}
+        - LOWER: cov
+  - id: flu
+    pattern_matchers:
+      - - LOWER: flu
+
