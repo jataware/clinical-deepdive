@@ -1,4 +1,3 @@
-
 chunk_size: 4096
 retries: 4
 
@@ -8,39 +7,80 @@ spacy_model: en_core_web_sm
 # spacy_model: en_core_web_md
 # spacy_model: en_core_web_lg
 
-output_file: output.txt
+csv: no
 
-search_patterns:
+output_file: debug.txt
+
+
+search_terms:
+  - reproduction number
+  - reproduction rate
+  - incubation time
+  - covid
+  - asymptomatic
+
+
+variable_patterns:
   - id: reproduction+number
-    term: reproduction number
     pattern_matchers:
-      - - TEXT: reproduction
-        - TEXT: number
+      - - LOWER: reproduction
+        - LOWER: number
         - LIKE_NUM: yes
-      - - TEXT: reproduction
-        - TEXT: number
+      - - LOWER: reproduction
+        - LOWER: number
+        - {}
+        - LIKE_NUM: yes
+
+  - id: reproduction+rate
+    pattern_matchers:
+      - - LOWER: reproduction
+        - LOWER: rate
+        - LIKE_NUM: yes
+      - - LOWER: reproduction
+        - LOWER: rate
         - {}
         - LIKE_NUM: yes
 
   - id: incubation+time
-    term: incubation time
     pattern_matchers:
-      - - TEXT: incubation
-        - TEXT: time
+      - - LOWER: incubation
+        - LOWER: time
         - LIKE_NUM: yes
       - - LIKE_NUM: yes
-        - TEXT: incubation
-        - TEXT: time
+        - LOWER: incubation
+        - LOWER: time
       - - LIKE_NUM: yes
         - {}
-        - TEXT: incubation
-        - TEXT: time
-      - - TEXT: incubation
-        - TEXT: time
+        - LOWER: incubation
+        - LOWER: time
+      - - LOWER: incubation
+        - LOWER: time
         - {}
         - LIKE_NUM: yes
-      - - TEXT: incubation
-        - TEXT: time
+      - - LOWER: incubation
+        - LOWER: time
         - {}
         - LIKE_NUM: yes
         - {}
+
+  - id: asymptomatic
+    pattern_matchers:
+      - - LOWER: asymptomatic
+
+disease_patterns:
+  - id: covid
+    pattern_matchers:
+      - - LOWER: covid-19
+      - - LOWER: covid
+        - LOWER: 19
+      - - LOWER: covid
+        - {}
+        - LOWER: 19
+      - - LOWER: sars
+        - {}
+        - LOWER: cov
+  - id: flu
+    pattern_matchers:
+      - - LOWER: flu
+
+

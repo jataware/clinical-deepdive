@@ -142,4 +142,6 @@ tmp/
 
 logs/
 
-output.txt
+output.*
+debug.*
+clinical_data.*

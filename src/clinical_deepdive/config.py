@@ -38,6 +38,7 @@ app_config = t.Dict(
         t.Key("retries"): t.Int(),
         t.Key("spacy_model"): t.String(),
         t.Key("output_file"): t.String(),
+        t.Key("csv"): t.Bool(),
         t.Key("search_terms"): t.List(t.String()),
         t.Key("variable_patterns"): t.List(
             t.Dict(

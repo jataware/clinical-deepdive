@@ -1,4 +1,3 @@
-
 import itertools
 import threading
 
@@ -46,4 +45,3 @@ class FastWriteCounter(object):
             value = next(self._counter) - self._number_of_read
             self._number_of_read += self._step
         return value
-

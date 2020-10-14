@@ -8,7 +8,9 @@ spacy_model: en_core_web_sm
 # spacy_model: en_core_web_md
 # spacy_model: en_core_web_lg
 
-output_file: output.txt
+csv: yes
+
+output_file: clinical_data.txt
 
 
 search_terms:
@@ -16,8 +18,7 @@ search_terms:
   - reproduction rate
   - incubation time
   - covid
-
-
+  - asymptomatic
 
 
 variable_patterns:
@@ -62,6 +63,10 @@ variable_patterns:
         - {}
         - LIKE_NUM: yes
         - {}
+
+  - id: asymptomatic
+    pattern_matchers:
+      - - LOWER: asymptomatic
 
 disease_patterns:
   - id: covid
