@@ -18,6 +18,11 @@ from .utils import FastWriteCounter, deep_get
 logger: Logger = logging.getLogger(__name__)
 
 
+class hashabledict(dict):
+    def __hash__(self):
+        return hash(frozenset(self))
+
+
 def config_matcher(settings, nlp):
     variable_matcher = Matcher(nlp.vocab)
     disease_matcher = Matcher(nlp.vocab)
@@ -65,9 +70,10 @@ async def to_rows(m: dict):
                 "sentence": v["sent"].text,
             }
 
-            rows.append(o)
+            rows.append(hashabledict(o))
 
-    return rows
+    # dedupe
+    return list(set(rows))
 
 
 def context_result(
