@@ -17,8 +17,9 @@ search_terms:
   - reproduction number
   - reproduction rate
   - incubation time
-  - covid
+  # - covid
   - asymptomatic
+  - Ro
 
 
 variable_patterns:
@@ -64,9 +65,9 @@ variable_patterns:
         - LIKE_NUM: yes
         - {}
 
-  - id: asymptomatic
-    pattern_matchers:
-      - - LOWER: asymptomatic
+  # - id: asymptomatic
+  #   pattern_matchers:
+  #     - - LOWER: asymptomatic
 
 disease_patterns:
   - id: covid
